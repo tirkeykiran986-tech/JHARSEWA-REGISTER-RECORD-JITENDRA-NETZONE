@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JharSewa Cloud Digital Register</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+    .container { max-width: 1260px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h2 { margin: 0; color: #0f172a; }
+    .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+    .badge-total { background: #e0f2fe; color: #0369a1; }
+    .badge-paid { background: #dcfce7; color: #166534; }
+    .badge-due { background: #fee2e2; color: #991b1b; }
+
+    .sync-bar { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .sync-bar input { flex: 1; min-width: 240px; padding: 8px 12px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 13px; }
+    .sync-status { font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 6px; }
+    .sync-on { background: #dcfce7; color: #166534; }
+    .sync-off { background: #fef9c3; color: #854d0e; }
+    .sync-loading { background: #e0f2fe; color: #0369a1; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; margin-bottom: 25px; }
+    @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+    
+    textarea { width: 100%; height: 285px; padding: 12px; border: 2px dashed #3b82f6; border-radius: 8px; font-size: 14px; resize: vertical; background: #eff6ff; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 3px; }
+    .field input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    .field input[readonly] { background: #f8fafc; font-weight: 700; }
+    
+    .btn-group { display: flex; gap: 10px; margin-top: 12px; }
+    .btn { padding: 9px 15px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .btn-save { background: #2563eb; color: #fff; flex: 2; font-size: 14px; }
+    .btn-save:hover { background: #1d4ed8; }
+    .btn-clear { background: #e2e8f0; color: #334155; flex: 1; }
+    .btn-refresh { background: #0284c7; color: #fff; }
+    .btn-refresh:hover { background: #0369a1; }
+    .btn-sheet { background: #0d9488; color: #fff; }
+    .btn-export { background: #16a34a; color: #fff; }
+    .btn-backup { background: #0f172a; color: #fff; }
+    
+    .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-pay { background: #f59e0b; color: #fff; margin-right: 4px; }
+    .btn-del { background: #ef4444; color: #fff; }
+
+    .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .search-box { padding: 8px 12px; width: 270px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 14px; }
+    .filter-select { padding: 8px 10px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 14px; background: #fff; }
+    .table-wrap { overflow-x: auto; max-height: 440px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background: #1e293b; color: #fff; padding: 10px; position: sticky; top: 0; white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    tr:hover { background: #f8fafc; }
+    
+    .amt-paid { color: #16a34a; font-weight: 700; }
+    .amt-due { color: #dc2626; font-weight: 700; background: #fef2f2; padding: 3px 7px; border-radius: 4px; display: inline-block; }
+    .amt-clear { color: #166534; font-weight: 700; background: #dcfce7; padding: 3px 7px; border-radius: 4px; display: inline-block; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-box { background: #fff; padding: 22px; border-radius: 10px; width: 380px; max-width: 92%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-box h3 { margin-top: 0; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+    .modal-info { background: #f8fafc; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; line-height: 1.6; }
+    
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; display: none; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 9999; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>☁️ JharSewa Cloud Register (Access Anywhere)</h2>
+    <div class="stats-bar">
+      <span class="badge badge-total" id="totalCount">Records: 0</span>
+      <span class="badge badge-paid" id="totalPaidSum">Total Paid: ₹0</span>
+      <span class="badge badge-due" id="totalDueSum">Balance Due: ₹0</span>
+    </div>
+  </div>
+
+  <!-- Cloud Sync Setup Bar -->
+  <div class="sync-bar">
+    <span id="syncIndicator" class="sync-status sync-on">🟢 Cloud Live Synced</span>
+    <input type="text" id="sheetWebAppUrl" placeholder="Google Apps Script Web App URL...">
+    <button class="btn btn-backup" onclick="saveSheetUrl()">Save URL</button>
+    <button class="btn btn-refresh" onclick="fetchFromGoogleSheet(true)">🔄 Refresh From Cloud</button>
+    <button class="btn btn-sheet" onclick="syncAllRecords()">⬆️ Push Local to Sheet</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <label style="font-weight:600; display:block; margin-bottom:6px;">1. Slip Text Yahan Paste Karein:</label>
+      <textarea id="rawText" oninput="parseText()" placeholder="Resident, Caste (ST/SC/OBC), Income ya kisi bhi JharSewa slip ka text yahan paste karein..."></textarea>
+    </div>
+
+    <div>
+      <label style="font-weight:600; display:block; margin-bottom:6px;">2. Auto-Arranged Details & Payment Entry:</label>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>Applicant Name</label>
+          <input type="text" id="applicantName">
+        </div>
+        <div class="field">
+          <label>Applied Date</label>
+          <input type="text" id="receivedDate">
+        </div>
+
+        <div class="field span-2">
+          <label>Father / Mother / Husband Name</label>
+          <input type="text" id="fatherName">
+        </div>
+        <div class="field">
+          <label>Mobile Number</label>
+          <input type="text" id="mobile" placeholder="Customer Mobile">
+        </div>
+
+        <div class="field span-3">
+          <label>Address</label>
+          <input type="text" id="address">
+        </div>
+
+        <div class="field span-2">
+          <label>Service Applied For</label>
+          <input type="text" id="service">
+        </div>
+        <div class="field">
+          <label>Reference No.</label>
+          <input type="text" id="refNo">
+        </div>
+
+        <div class="field">
+          <label>Total Fee (₹)</label>
+          <input type="number" id="totalFee" placeholder="e.g. 100" oninput="calcBalance()">
+        </div>
+        <div class="field">
+          <label>Paid Amount (₹)</label>
+          <input type="number" id="paidAmount" placeholder="e.g. 50" oninput="calcBalance()">
+        </div>
+        <div class="field">
+          <label>Balance Due (₹)</label>
+          <input type="number" id="balanceAmount" value="0" readonly>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-save" onclick="saveRecord()">💾 Save (Cloud + Local)</button>
+        <button class="btn btn-clear" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-controls">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input type="text" id="searchInput" class="search-box" onkeyup="renderTable()" placeholder="🔍 Naam, Ref No., Mobile search karein...">
+      <select id="paymentFilter" class="filter-select" onchange="renderTable()">
+        <option value="all">Sabhi Records (All)</option>
+        <option value="due">Sirf Bakaya Wale (Balance Due)</option>
+        <option value="paid">Full Paid Records</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-export" onclick="exportToCSV()">📊 Download CSV</button>
+      <button class="btn btn-backup" onclick="downloadBackup()">⬇️ Backup JSON</button>
+      <label class="btn" style="background:#cbd5e1; color:#0f172a; cursor:pointer;">
+        ⬆️ Restore JSON <input type="file" accept=".json" onchange="restoreBackup(event)" style="display:none;">
+      </label>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Applicant Name</th>
+          <th>Father/Husband</th>
+          <th>Service</th>
+          <th>Reference No.</th>
+          <th>Date</th>
+          <th>Mobile</th>
+          <th>Total (₹)</th>
+          <th>Paid (₹)</th>
+          <th>Balance (₹)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="recordsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Balance Update Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-box">
+    <h3>💰 Balance Update Karein</h3>
+    <div class="modal-info" id="modalDetails"></div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Total Fee (₹)</label>
+      <input type="number" id="editTotalFee" oninput="calcModalBalance()">
+    </div>
+    <div class="field" style="margin-bottom:10px;">
+      <label>Abhi Aur Kitna Jama Kiya? (Add Payment ₹)</label>
+      <input type="number" id="addMorePaid" placeholder="e.g. 50" oninput="calcModalBalance()">
+    </div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Naya Balance Due (₹)</label>
+      <input type="number" id="editNewBalance" readonly>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-save" onclick="confirmPaymentUpdate()">✅ Update Payment</button>
+      <button class="btn btn-clear" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxFh80o1mc6WPbBJQRpkvpedVzF6Wg_v8DY-Pe8SEUI0HrrXiZauh0vU4b6LJ5gImf19A/exec";
+
+  const STORAGE_KEY = "jitendra_netzone_jharsewa_records";
+  const URL_KEY = "jitendra_netzone_sheet_webapp_url";
+  let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  let activeEditId = null;
+
+  function getActiveUrl() {
+    return (localStorage.getItem(URL_KEY) || DEFAULT_SHEET_URL || "").trim();
+  }
+
+  window.onload = () => {
+    const activeUrl = getActiveUrl();
+    document.getElementById("sheetWebAppUrl").value = activeUrl;
+    renderTable();
+    if (activeUrl) {
+      fetchFromGoogleSheet(false);
+    } else {
+      updateSyncIndicator("");
+    }
+  };
+
+  function updateSyncIndicator(url, state = "ready") {
+    const ind = document.getElementById("syncIndicator");
+    if (!url || !url.toLowerCase().startsWith("https://script.google.com/")) {
+      ind.className = "sync-status sync-off";
+      ind.innerText = "⚠️ Sheet Not Linked";
+    } else if (state === "loading") {
+      ind.className = "sync-status sync-loading";
+      ind.innerText = "⏳ Cloud se load ho raha hai...";
+    } else {
+      ind.className = "sync-status sync-on";
+      ind.innerText = "🟢 Cloud Live Synced";
+    }
+  }
+
+  function saveSheetUrl() {
+    const url = document.getElementById("sheetWebAppUrl").value.trim();
+    localStorage.setItem(URL_KEY, url);
+    updateSyncIndicator(url);
+    showToast("✅ URL Save ho gaya! Cloud se records load ho rahe hain...", "#0d9488");
+    if (url) fetchFromGoogleSheet(true);
+  }
+
+  function showToast(msg, color = "#0f172a") {
+    const t = document.getElementById("toast");
+    t.style.background = color;
+    t.innerText = msg;
+    t.style.display = "block";
+    setTimeout(() => { t.style.display = "none"; }, 3000);
+  }
+
+  async function fetchFromGoogleSheet(manual = false) {
+    const url = getActiveUrl();
+    if (!url) {
+      if (manual) alert("Pehle Google Apps Script Web App URL paste karke Save URL karein!");
+      return;
+    }
+
+    updateSyncIndicator(url, "loading");
+    try {
+      const response = await fetch(url);
+      const res = await response.json();
+      if (res.status === "success" && Array.isArray(res.records)) {
+        records = res.records;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        renderTable();
+        updateSyncIndicator(url, "ready");
+        if (manual) showToast("☁️ Cloud se " + records.length + " records load ho gaye!", "#0284c7");
+      } else {
+        updateSyncIndicator(url, "ready");
+        if (manual) showToast("⚠️ Fetch Error: " + (res.message || "Unknown error"), "#dc2626");
+      }
+    } catch (err) {
+      updateSyncIndicator(url, "ready");
+      if (manual) showToast("⚠️ Offline Mode: Internet nahi hai, local records dikh rahe hain.", "#d97706");
+    }
+  }
+
+  async function pushToGoogleSheet(recordArray, isBulk = false) {
+    const url = getActiveUrl();
+    if (!url) {
+      if (isBulk) alert("Pehle upar Google Apps Script Web App URL paste karke Save URL karein!");
+      return;
+    }
+
+    try {
+      if (isBulk) showToast("⏳ Google Sheet me data bheja ja raha hai...", "#0369a1");
+      const response = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify({ action: "save", records: recordArray })
+      });
+      const res = await response.json();
+      if (res.status === "success") {
+        showToast("☁️ " + res.message, "#0d9488");
+      } else {
+        showToast("⚠️ Sheet Sync Error: " + res.message, "#dc2626");
+      }
+    } catch (err) {
+      showToast("⚠️ Local me save hai, par Cloud sync fail hua", "#d97706");
+    }
+  }
+
+  async function deleteFromGoogleSheet(record) {
+    const url = getActiveUrl();
+    if (!url) return;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "delete",
+          refNo: record.refNo || "",
+          applicantName: record.applicantName || ""
+        })
+      });
+      const res = await response.json();
+      if (res.status === "success") {
+        showToast("🗑️ " + res.message, "#dc2626");
+      }
+    } catch (err) {
+      showToast("⚠️ Local se delete hua, par Cloud se delete nahi ho paya", "#d97706");
+    }
+  }
+
+  function syncAllRecords() {
+    if (records.length === 0) return alert("Sync karne ke liye koi record nahi hai!");
+    pushToGoogleSheet([...records].reverse(), true);
+  }
+
+  function calcBalance() {
+    const total = parseFloat(document.getElementById("totalFee").value) || 0;
+    const paid = parseFloat(document.getElementById("paidAmount").value) || 0;
+    const bal = total - paid;
+    document.getElementById("balanceAmount").value = bal;
+    document.getElementById("balanceAmount").style.color = bal > 0 ? "#dc2626" : "#16a34a";
+  }
+
+  function parseText() {
+    let raw = document.getElementById("rawText").value;
+    if (!raw.trim()) return;
+
+    let normalized = raw
+      .replace(/\r/g, "")
+      .replace(/\n\s*:/g, " :")
+      .replace(/Father\/Mother\/Husband\s*\n\s*Name/gi, "Father/Mother/Husband Name")
+      .replace(/(Father|Husband|Mother)(?:['’]?s)?\s*\n\s*Name/gi, "$1 Name")
+      .replace(/Application Reference\s*\n\s*No\.?/gi, "Application Reference No.")
+      .replace(/Application Received\s*\n\s*Date/gi, "Application Received Date")
+      .replace(/Service Applied\s*\n\s*for/gi, "Service Applied for");
+
+    const lines = normalized.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+
+    let applicantName = "", fatherName = "", address = "", service = "", refNo = "", receivedDate = "";
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (/Applicant'?s?\s*Name/i.test(line)) {
+        applicantName = extractValue(line, lines[i + 1]);
+      } else if (i === 0 && !line.includes(":") && !/JH[A-Z]{2,5}\/\d{4}/i.test(line)) {
+        applicantName = line;
+      } else if (/(Father|Mother|Husband)/i.test(line) && /Name/i.test(line)) {
+        fatherName = extractValue(line, lines[i + 1]);
+      } else if (/Address/i.test(line)) {
+        let addrVal = extractAfterColon(line);
+        if (addrVal) {
+          address = addrVal;
+        } else {
+          let addrParts = [];
+          let j = i + 1;
+          while (j < lines.length && !/Service\s*(Applied|Name)/i.test(lines[j]) && !/Reference\s*No/i.test(lines[j])) {
+            addrParts.push(lines[j].replace(/^:\s*/, ""));
+            j++;
+          }
+          address = addrParts.join(" ");
+        }
+      } else if (/Service\s*(Applied|Name)/i.test(line)) {
+        service = extractValue(line, lines[i + 1]);
+      } else if (/Reference\s*No/i.test(line) || /JH[A-Z]{2,5}\/\d{4}\/\d+/i.test(line)) {
+        const refMatch = line.match(/JH[A-Z0-9\/]+/i);
+        refNo = refMatch ? refMatch[0].trim() : extractValue(line, lines[i + 1]);
+      } else if (/(Received|Applied|Application|Submission)\s*Date/i.test(line) || /\bDate\b/i.test(line)) {
+        const dateMatch = line.match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/);
+        if (dateMatch) {
+          receivedDate = dateMatch[0];
+        } else if (lines[i + 1]) {
+          const nextLineDate = lines[i + 1].match(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/);
+          if (nextLineDate) receivedDate = nextLineDate[0];
+        }
+      }
+    }
+
+    if (!receivedDate) {
+      const globalDateMatch = normalized.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]20\d{2}\b/);
+      if (globalDateMatch) receivedDate = globalDateMatch[0];
+    }
+
+    document.getElementById("applicantName").value = applicantName;
+    document.getElementById("fatherName").value = fatherName;
+    document.getElementById("address").value = address;
+    document.getElementById("service").value = service;
+    document.getElementById("refNo").value = refNo;
+    document.getElementById("receivedDate").value = receivedDate;
+  }
+
+  function extractAfterColon(str) {
+    const idx = str.indexOf(":");
+    return idx !== -1 ? str.substring(idx + 1).trim() : "";
+  }
+
+  function extractValue(currentLine, nextLine) {
+    const after = extractAfterColon(currentLine);
+    if (after.length > 0) return after;
+    if (nextLine) return nextLine.replace(/^:\s*/, "").trim();
+    return "";
+  }
+
+  function saveRecord() {
+    const totalFee = parseFloat(document.getElementById("totalFee").value) || 0;
+    const paidAmount = parseFloat(document.getElementById("paidAmount").value) || 0;
+    const balanceAmount = totalFee - paidAmount;
+
+    const entry = {
+      id: Date.now(),
+      applicantName: document.getElementById("applicantName").value.trim(),
+      fatherName: document.getElementById("fatherName").value.trim(),
+      address: document.getElementById("address").value.trim(),
+      service: document.getElementById("service").value.trim(),
+      refNo: document.getElementById("refNo").value.trim(),
+      receivedDate: document.getElementById("receivedDate").value.trim(),
+      mobile: document.getElementById("mobile").value.trim(),
+      totalFee: totalFee,
+      paidAmount: paidAmount,
+      balanceAmount: balanceAmount
+    };
+
+    if (!entry.applicantName && !entry.refNo) {
+      return alert("Data khali hai! Pehle slip ka text paste karein.");
+    }
+
+    if (entry.refNo && records.some(r => r.refNo.toLowerCase() === entry.refNo.toLowerCase())) {
+      return alert("⚠️ Yeh Reference Number (" + entry.refNo + ") pehle se save hai!");
+    }
+
+    records.unshift(entry);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    renderTable();
+    clearForm();
+    showToast("✅ Save ho gaya! Cloud me bheja ja raha hai...", "#16a34a");
+
+    pushToGoogleSheet([entry], false);
+  }
+
+  function clearForm() {
+    document.getElementById("rawText").value = "";
+    ["applicantName", "fatherName", "address", "service", "refNo", "receivedDate", "mobile", "totalFee", "paidAmount"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("balanceAmount").value = "0";
+    document.getElementById("balanceAmount").style.color = "#1e293b";
+  }
+
+  function openPaymentModal(id) {
+    const rec = records.find(r => r.id === id);
+    if (!rec) return;
+    activeEditId = id;
+
+    const tFee = Number(rec.totalFee) || 0;
+    const pAmt = Number(rec.paidAmount) || 0;
+    const bAmt = Number(rec.balanceAmount) || 0;
+
+    document.getElementById("modalDetails").innerHTML = `
+      <strong>Applicant:</strong> ${rec.applicantName}<br>
+      <strong>Ref No:</strong> ${rec.refNo || "N/A"}<br>
+      <strong>Pehle Jama (Paid):</strong> ₹${pAmt} | <strong>Abhi Bakaya:</strong> <span style="color:#dc2626; font-weight:700;">₹${bAmt}</span>
+    `;
+    document.getElementById("editTotalFee").value = tFee;
+    document.getElementById("addMorePaid").value = bAmt > 0 ? bAmt : 0;
+    calcModalBalance();
+    document.getElementById("paymentModal").style.display = "flex";
+  }
+
+  function calcModalBalance() {
+    const rec = records.find(r => r.id === activeEditId);
+    if (!rec) return;
+    const newTotal = parseFloat(document.getElementById("editTotalFee").value) || 0;
+    const prevPaid = Number(rec.paidAmount) || 0;
+    const extraPaid = parseFloat(document.getElementById("addMorePaid").value) || 0;
+    const newBal = newTotal - (prevPaid + extraPaid);
+    document.getElementById("editNewBalance").value = newBal;
+    document.getElementById("editNewBalance").style.color = newBal > 0 ? "#dc2626" : "#16a34a";
+  }
+
+  function confirmPaymentUpdate() {
+    const idx = records.findIndex(r => r.id === activeEditId);
+    if (idx === -1) return;
+
+    const newTotal = parseFloat(document.getElementById("editTotalFee").value) || 0;
+    const extraPaid = parseFloat(document.getElementById("addMorePaid").value) || 0;
+    const updatedPaid = (Number(records[idx].paidAmount) || 0) + extraPaid;
+    const updatedBalance = newTotal - updatedPaid;
+
+    records[idx].totalFee = newTotal;
+    records[idx].paidAmount = updatedPaid;
+    records[idx].balanceAmount = updatedBalance;
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    const updatedRecord = records[idx];
+    closeModal();
+    renderTable();
+    showToast("✅ Payment update ho gaya! Cloud update ho raha hai...", "#16a34a");
+
+    pushToGoogleSheet([updatedRecord], false);
+  }
+
+  function closeModal() {
+    document.getElementById("paymentModal").style.display = "none";
+    activeEditId = null;
+  }
+
+  function deleteRecord(id) {
+    const targetRecord = records.find(r => r.id === id);
+    if (!targetRecord) return;
+    if (!confirm("Kya aap is record ko Local aur Cloud (Google Sheet) dono se delete karna chahte hain?")) return;
+
+    records = records.filter(r => r.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    renderTable();
+    showToast("🗑️ Delete ho gaya! Cloud se hataya ja raha hai...", "#dc2626");
+
+    deleteFromGoogleSheet(targetRecord);
+  }
+
+  function renderTable() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const filterType = document.getElementById("paymentFilter").value;
+    const tbody = document.getElementById("recordsBody");
+    tbody.innerHTML = "";
+
+    let sumPaid = 0;
+    let sumDue = 0;
+
+    records.forEach(r => {
+      sumPaid += Number(r.paidAmount) || 0;
+      const b = Number(r.balanceAmount) || 0;
+      if (b > 0) sumDue += b;
+    });
+
+    document.getElementById("totalCount").innerText = "Records: " + records.length;
+    document.getElementById("totalPaidSum").innerText = "Total Paid: ₹" + sumPaid;
+    document.getElementById("totalDueSum").innerText = "Balance Due: ₹" + sumDue;
+
+    const filtered = records.filter(r => {
+      const matchesText =
+        (r.applicantName || "").toLowerCase().includes(query) ||
+        (r.fatherName || "").toLowerCase().includes(query) ||
+        (r.refNo || "").toLowerCase().includes(query) ||
+        (r.service || "").toLowerCase().includes(query) ||
+        (r.receivedDate || "").toLowerCase().includes(query) ||
+        (r.mobile || "").toLowerCase().includes(query);
+
+      const bal = Number(r.balanceAmount) || 0;
+      if (filterType === "due") return matchesText && bal > 0;
+      if (filterType === "paid") return matchesText && bal <= 0;
+      return matchesText;
+    });
+
+    filtered.forEach((r, index) => {
+      const tFee = Number(r.totalFee) || 0;
+      const pAmt = Number(r.paidAmount) || 0;
+      const bAmt = Number(r.balanceAmount) || 0;
+
+      const balBadge = bAmt > 0
+        ? `<span class="amt-due">₹${bAmt} Due</span>`
+        : `<span class="amt-clear">₹0 (Clear)</span>`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${filtered.length - index}</td>
+        <td><strong>${r.applicantName}</strong><br><span style="font-size:11px; color:#64748b;">${r.address}</span></td>
+        <td>${r.fatherName}</td>
+        <td>${r.service}</td>
+        <td style="font-family:monospace; font-weight:600; color:#2563eb;">${r.refNo}</td>
+        <td>${r.receivedDate}</td>
+        <td>${r.mobile || "-"}</td>
+        <td>₹${tFee}</td>
+        <td class="amt-paid">₹${pAmt}</td>
+        <td>${balBadge}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn-sm btn-pay" onclick="openPaymentModal(${r.id})">Update ₹</button>
+          <button class="btn-sm btn-del" onclick="deleteRecord(${r.id})">Del</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function exportToCSV() {
+    if (records.length === 0) return alert("Export karne ke liye koi record nahi hai!");
+    
+    const headers = ["Applicant Name", "Father/Husband Name", "Address", "Service Applied For", "Reference No", "Applied Date", "Mobile", "Total Fee", "Paid Amount", "Balance Due"];
+    const rows = records.map(r => [
+      `"${(r.applicantName || "").replace(/"/g, '""')}"`,
+      `"${(r.fatherName || "").replace(/"/g, '""')}"`,
+      `"${(r.address || "").replace(/"/g, '""')}"`,
+      `"${(r.service || "").replace(/"/g, '""')}"`,
+      `"${(r.refNo || "").replace(/"/g, '""')}"`,
+      `"${(r.receivedDate || "").replace(/"/g, '""')}"`,
+      `"${(r.mobile || "").replace(/"/g, '""')}"`,
+      Number(r.totalFee) || 0,
+      Number(r.paidAmount) || 0,
+      Number(r.balanceAmount) || 0
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "JharSewa_Hisab_" + new Date().toISOString().slice(0,10) + ".csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function downloadBackup() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
+    const link = document.createElement("a");
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", "JharSewa_Backup_" + new Date().toISOString().slice(0,10) + ".json");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function restoreBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          records = imported;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+          renderTable();
+          showToast("✅ Backup restore ho gaya!", "#16a34a");
+        }
+      } catch (err) {
+        alert("Invalid backup file!");
+      }
+    };
+    reader.readAsText(file);
+  }
+</script>
+
+</body>
+</html>
